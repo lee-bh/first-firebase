@@ -3,6 +3,7 @@
         <title>My Website</title>
         <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
         <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-auth-compat.js"></script>
     </head>
     <body>
         <h1>Welcome to my website</h1>
@@ -23,63 +24,94 @@
         <section>
             <h2>Contact</h2>
         </section>
-        <section>
-            <h2>Add User</h2>
-            <input type="text" id="firstName" placeholder="First Name">
-            <input type="text" id="lastName" placeholder="Last Name">
-            <input type="number" id="age" placeholder="Age">
-            <button id="addUser">Add User</button>
-        </section>  
+      
         <section>
             <h2>User List</h2>
             <ul id="userList"></ul>
         </section>
     
-<script type="module">
- 
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyBKfzPLOwKojyFVl0QdFFnIpdUsMe4_Ou8",
-    authDomain: "simple-board-9f0a4.firebaseapp.com",
-    projectId: "simple-board-9f0a4",
-    storageBucket: "simple-board-9f0a4.firebasestorage.app",
-    messagingSenderId: "1093130667354",
-    appId: "1:1093130667354:web:f2f76b0f3fb65147ae5f63",
-    measurementId: "G-CWD4TW3NL2"
-  };
+        <button id="loginBtn">Login</button>
+<button id="logoutBtn" style="display:none;">Logout</button>
 
-  // Initialize Firebase
-  const app = firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-
-addUser.onclick = function() {
-    const firstName = document.getElementById("firstName").value;
-    const lastName = document.getElementById("lastName").value;
-    const age = document.getElementById("age").value;
-
-    db.collection("users").add({
-        first: firstName,
-        last: lastName,
-        born: age
-    }).then((docRef) => {
-        console.log("Document written with ID: ", docRef.id);
-        getUsers();
-    })
-    .catch((error) => {
-        console.error("Error adding document: ", error);
-    });
-}
-function getUsers() {
-    userList.innerHTML = "";
-    db.collection("users").get().then((querySnapshot) => {
-        querySnapshot.forEach((doc) => {
-            console.log(`${doc.id} => ${doc.data()}`);
-        userList.innerHTML += `<li>${doc.data().first} ${doc.data().last} ${doc.data().born}</li>`;
-    });
-});
-}
-document.addEventListener("DOMContentLoaded", getUsers);
+<section id="userSection" style="display:none;">
+  <h2>Add User</h2>
+  <input type="text" id="firstName" placeholder="First Name">
+  <input type="text" id="lastName" placeholder="Last Name">
+  <input type="number" id="age" placeholder="Age">
+  <button id="addUser">Add User</button>
+</section>
+        
+        <script type="module">
+          const firebaseConfig = {
+            apiKey: "AIzaSyBKfzPLOwKojyFVl0QdFFnIpdUsMe4_Ou8",
+            authDomain: "simple-board-9f0a4.firebaseapp.com",
+            projectId: "simple-board-9f0a4",
+            storageBucket: "simple-board-9f0a4.firebasestorage.app",
+            messagingSenderId: "1093130667354",
+            appId: "1:1093130667354:web:f2f76b0f3fb65147ae5f63",
+            measurementId: "G-CWD4TW3NL2"
+          };
+        
+          const app = firebase.initializeApp(firebaseConfig);
+          const db = firebase.firestore();
+          const auth = firebase.auth();
+        
+          // 로그인 상태 감지
+          auth.onAuthStateChanged((user) => {
+            const userSection = document.getElementById("userSection");
+            if (user) {
+              console.log("Logged in as", user.email);
+              document.getElementById("loginBtn").style.display = "none";
+              document.getElementById("logoutBtn").style.display = "inline-block";
+              userSection.style.display = "block";
+            } else {
+              console.log("No user logged in");
+              document.getElementById("loginBtn").style.display = "inline-block";
+              document.getElementById("logoutBtn").style.display = "none";
+              userSection.style.display = "none";
+            }
+          });
+        
+          document.getElementById("loginBtn").onclick = function () {
+            const email = prompt("Enter email:");
+            const password = prompt("Enter password:");
+            auth.signInWithEmailAndPassword(email, password)
+              .then(() => alert("Logged in!"))
+              .catch(err => alert("Login failed: " + err.message));
+          };
+        
+          document.getElementById("logoutBtn").onclick = function () {
+            auth.signOut();
+          };
+        
+          document.getElementById("addUser").onclick = function () {
+            const firstName = document.getElementById("firstName").value;
+            const lastName = document.getElementById("lastName").value;
+            const age = document.getElementById("age").value;
+        
+            db.collection("users").add({
+              first: firstName,
+              last: lastName,
+              born: age
+            }).then((docRef) => {
+              console.log("Document written with ID: ", docRef.id);
+              getUsers();
+            }).catch((error) => {
+              console.error("Error adding document: ", error);
+            });
+          };
+        
+          function getUsers() {
+            const userList = document.getElementById("userList");
+            userList.innerHTML = "";
+            db.collection("users").get().then((querySnapshot) => {
+              querySnapshot.forEach((doc) => {
+                userList.innerHTML += `<li>${doc.data().first} ${doc.data().last} ${doc.data().born}</li>`;
+              });
+            });
+          }
+        
+          document.addEventListener("DOMContentLoaded", getUsers);
         </script>
     </body>
 </html>
